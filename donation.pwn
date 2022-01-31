@@ -17,7 +17,7 @@
 #define YSI_NO_MODE_CACHE
 
 new MySQL:gSQL;
-new gString[312], gQuery[512], gDialog[656];
+new gString[312], gQuery[512], gDialog[656], selectedDonation[MAX_PLAYERS];
 
 #define SQL_HOSTNAME "localhost"
 #define SQL_USERNAME "root"
@@ -54,6 +54,8 @@ public LoadServerDonation() {
 	return printf("[server]: ucitano %d donacija.", Iter_Count(i_Donation));
 }
 
+public OnPlayerConnect(playerid) { selectedDonation[playerid] = -1; return 1; }
+
 public OnGameModeInit() {
 	ConnectWithBase();
 	mysql_log(ERROR);
@@ -71,19 +73,17 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
 	    case threadDonations: {
 	        if(!response) return 1;
 	        if(response) {
-	            switch(listitem) {
-					case 0: {
-						strdel(gDialog, 0, sizeof(gDialog));
-						foreach(new i : i_Donation) {
-						    if(donationInfo[i][donationBaseID] > 0) {
-						        format(gDialog, sizeof(gDialog), "%s%s", gDialog, donationInfo[i][donationDesc]);
-							}
-						}
-						ShowPlayerDialog(playerid, threadDonationsDesc, DIALOG_STYLE_MSGBOX, "Donacije", gDialog, "Zatvori", "");
-						strdel(gDialog, 0, sizeof(gDialog));
-					}
-				}
+	            selectedDonation[playerid] = listitem;
+				new i = selectedDonation[playerid];
+				strdel(gDialog, 0, sizeof(gDialog));
+				format(gDialog, sizeof(gDialog), "%s%s", gDialog, donationInfo[i][donationDesc]);
+				ShowPlayerDialog(playerid, threadDonationsDesc, DIALOG_STYLE_MSGBOX, "Donacije", gDialog, "Zatvori", "");
+                strdel(gDialog, 0, sizeof(gDialog));
     		}
+		}
+		case threadDonationsDesc: {
+			if(!response) { selectedDonation[playerid] = -1; return true; }
+			if(response) { SendClientMessage(playerid, -1, "Zatvorili ste opis donacije."); }
 		}
 	}
 	return 1;
@@ -110,7 +110,7 @@ YCMD:donacije(playerid, params[], help) {
 	strdel(gDialog, 0, sizeof(gDialog));
 	foreach(new i : i_Donation) {
 		if(donationInfo[i][donationBaseID] > 0) {
-		    format(gDialog, sizeof(gDialog), "%s%s", gDialog, donationInfo[i][donationDesc]);
+		    format(gDialog, sizeof(gDialog), "%s%s", gDialog, donationInfo[i][donationName]);
 		}
 	}
 	ShowPlayerDialog(playerid, threadDonations, DIALOG_STYLE_LIST, "Lista Donacija", gDialog, "Vidi", "Odustani");
